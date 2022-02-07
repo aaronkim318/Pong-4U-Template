@@ -26,7 +26,8 @@ namespace Pong
         #region global values
 
         //graphics objects for drawing
-        SolidBrush drawBrush = new SolidBrush(Color.White);
+        SolidBrush drawBrush = new SolidBrush(Color.Red);
+        SolidBrush whiteBrush = new SolidBrush(Color.White);
         Font drawFont = new Font("Courier New", 10);
 
         // Sounds for game
@@ -94,7 +95,7 @@ namespace Pong
                     break;
             }
         }
-        
+
         // -- YOU DO NOT NEED TO MAKE CHANGES TO THIS METHOD
         private void Form1_KeyUp(object sender, KeyEventArgs e)
         {
@@ -144,9 +145,11 @@ namespace Pong
             p2Y = this.Height / 2 - pHeight / 2;
 
             // TODO set Width and Height of ball
+            ballSize = 10;
             // TODO set starting X position for ball to middle of screen, (use this.Width and ball.Width)
+            ballX = this.Width / 2;
             // TODO set starting Y position for ball to middle of screen, (use this.Height and ball.Height)
-
+            ballY = this.Height / 2;
         }
 
         /// <summary>
@@ -155,35 +158,70 @@ namespace Pong
         /// </summary>
         private void gameUpdateLoop_Tick(object sender, EventArgs e)
         {
+
+
             #region update ball position
 
             // TODO create code to move ball either left or right based on ballMoveRight and using BALL_SPEED
-
+            if (ballMoveRight == true)
+            {
+                ballX += BALL_SPEED;
+            }
+            else if (ballMoveRight == false)
+            {
+                ballX -= BALL_SPEED;
+            }
             // TODO create code move ball either down or up based on ballMoveDown and using BALL_SPEED
+            if (ballMoveDown == true)
+            {
+                ballY += BALL_SPEED;
+
+            }
+            else if (ballMoveDown == false)
+            {
+                ballY -= BALL_SPEED;
+            }
 
             #endregion
 
             #region update paddle positions
 
-            if (aKeyDown == true && p1Y > 0)
+            if (aKeyDown == true && p1Y >= 0)
             {
                 // TODO create code to move player 1 paddle up using p1.Y and PADDLE_SPEED
+                p1Y -= PADDLE_SPEED;
             }
 
             // TODO create an if statement and code to move player 1 paddle down using p1.Y and PADDLE_SPEED
-
+            if (zKeyDown == true && p1Y <= this.Height - pHeight)
+            {
+                p1Y += PADDLE_SPEED;
+            }
             // TODO create an if statement and code to move player 2 paddle up using p2.Y and PADDLE_SPEED
-
+            if (jKeyDown == true && p2Y >= 0)
+            {
+                p2Y -= PADDLE_SPEED;
+            }
             // TODO create an if statement and code to move player 2 paddle down using p2.Y and PADDLE_SPEED
-
+            if (mKeyDown == true && p2Y <= this.Height - pHeight)
+            {
+                p2Y += PADDLE_SPEED;
+            }
             #endregion
 
             #region ball collision with top and bottom lines
 
             if (ballY < 0) // if ball hits top line
             {
+                ballMoveDown = true;
+                collisionSound.Play();
                 // TODO use ballMoveDown boolean to change direction
                 // TODO play a collision sound
+            }
+            if (ballY > this.Height - pHeight)
+            {
+                ballMoveDown = false;
+                collisionSound.Play();
             }
             // TODO In an else if statement use ball.Y, this.Height, and ball.Width to check for collision with bottom line
             // If true use ballMoveDown down boolean to change direction
@@ -192,14 +230,26 @@ namespace Pong
 
             #region ball collision with paddles
 
+            Rectangle baller = new Rectangle(ballX, ballY, ballSize, ballSize);
+            Rectangle whacker1 = new Rectangle(p1X, p1Y, pWidth, pHeight);
+            Rectangle whacker2 = new Rectangle(p2X, p2Y, pWidth, pHeight);
             // TODO create if statment that checks p1 collides with ball and if it does
-                 // --- play a "paddle hit" sound and
-                 // --- use ballMoveRight boolean to change direction
-
+            // --- play a "paddle hit" sound and
+            // --- use ballMoveRight boolean to change direction
+            if (whacker1.IntersectsWith(baller))
+            {
+                ballMoveRight = true;
+                collisionSound.Play();
+            }
+            if (whacker2.IntersectsWith(baller))
+            {
+                ballMoveRight = false;
+                collisionSound.Play();
+            }
             // TODO create if statment that checks p2 collides with ball and if it does
-                // --- play a "paddle hit" sound and
-                // --- use ballMoveRight boolean to change direction
-            
+            // --- play a "paddle hit" sound and
+            // --- use ballMoveRight boolean to change direction
+
             /*  ENRICHMENT
              *  Instead of using two if statments as noted above see if you can create one
              *  if statement with multiple conditions to play a sound and change direction
@@ -214,20 +264,41 @@ namespace Pong
                 // TODO
                 // --- play score sound
                 // --- update player 2 score
+                ballX = this.Width / 2;
+                ballY = this.Height / 2;
+                player2Score++;
+                scoreSound.Play();
 
+
+                if (player2Score == gameWinScore)
+                {
+                    GameOver("winner");
+                }
                 // TODO use if statement to check to see if player 2 has won the game. If true run 
                 // GameOver method. Else change direction of ball and call SetParameters method.
 
             }
 
             // TODO same as above but this time check for collision with the right wall
+            if (ballX > this.Width)
+            {
+                ballX = this.Width / 2;
+                ballY = this.Height / 2;
+                player1Score++;
+                scoreSound.Play();
 
+
+                if (player1Score == gameWinScore)
+                {
+                    GameOver("winner");
+                }
+            }
             #endregion
-            
+
             //refresh the screen, which causes the Form1_Paint method to run
             this.Refresh();
         }
-        
+
         /// <summary>
         /// Displays a message for the winner when the game is over and allows the user to either select
         /// to play again or end the program
@@ -235,8 +306,26 @@ namespace Pong
         /// <param name="winner">The player name to be shown as the winner</param>
         private void GameOver(string winner)
         {
-            newGameOk = true;
+            gameUpdateLoop.Enabled = false;
+            startLabel.Visible = true;
 
+            if (player1Score == 2)
+            {
+
+                startLabel.Text = $"Player 1 is the {winner}";
+                Refresh();
+                Thread.Sleep(2000);
+                startLabel.Text = $"Press Space to play again";
+            }
+            else if (player2Score == 2)
+            {
+
+                startLabel.Text = $"Player 2 is the {winner}";
+                Refresh();
+                Thread.Sleep(2000);
+                startLabel.Text = $"Press Space to play again";
+            }
+            newGameOk = true;
             // TODO create game over logic
             // --- stop the gameUpdateLoop
             // --- show a message on the startLabel to indicate a winner, (need to Refresh).
@@ -247,11 +336,20 @@ namespace Pong
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            // TODO draw paddles using FillRectangle
+            if (gameUpdateLoop.Enabled == true)
+            {
+                // TODO draw paddles using FillRectangle
+                e.Graphics.FillRectangle(whiteBrush, p1X, p1Y, pWidth, pHeight);
+                e.Graphics.FillRectangle(whiteBrush, p2X, p2Y, pWidth, pHeight);
+                // TODO draw ball using FillRectangle
+                e.Graphics.FillRectangle(drawBrush, ballX, ballY, ballSize, ballSize);
 
-            // TODO draw ball using FillRectangle
+                // TODO draw scores to the screen using DrawString
 
-            // TODO draw scores to the screen using DrawString
+                e.Graphics.DrawString($"{player1Score}", drawFont, drawBrush, 50, this.Height - 20);
+                e.Graphics.DrawString($"{player2Score}", drawFont, drawBrush, 550, this.Height - 20);
+            }
+
         }
 
     }
