@@ -309,7 +309,7 @@ namespace Pong
             gameUpdateLoop.Enabled = false;
             startLabel.Visible = true;
 
-            if (player1Score == 2)
+            if (player1Score == gameWinScore)
             {
 
                 startLabel.Text = $"Player 1 is the {winner}";
@@ -317,7 +317,7 @@ namespace Pong
                 Thread.Sleep(2000);
                 startLabel.Text = $"Press Space to play again";
             }
-            else if (player2Score == 2)
+            else if (player2Score == gameWinScore)
             {
 
                 startLabel.Text = $"Player 2 is the {winner}";
